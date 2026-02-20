@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>중학 역사② - 가로세로 퍼즐</title>
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;900&display=swap" rel="stylesheet">
+
+<style>
+:root {
+    --primary-teal: #008080;
+    --dark-teal: #004d40;
+    --light-teal: #e0f2f2;
+    --line-color: #004d40;
+    --bg-pattern: #f0f7f7;
+}
+
+body {
+    font-family: 'Nanum Gothic', sans-serif;
+    background-color: var(--bg-pattern);
+    background-image: radial-gradient(var(--light-teal) 1.5px, transparent 1.5px);
+    background-size: 30px 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    margin: 0;
+}
+
+.title-container { text-align: center; margin-bottom: 25px; }
+h1 { font-size: 1.2rem; color: var(--dark-teal); margin: 0; }
+
+.highlight-title {
+    font-size: 3.2rem;
+    font-weight: 900;
+    color: var(--primary-teal);
+    text-shadow: 2px 2px 0px #fff, 4px 4px 10px rgba(0,128,128,0.2);
+    display: block;
+    margin-top: 5px;
+}
+
+.puzzle-wrapper {
+    background-color: var(--primary-teal);
+    padding: 10px;
+    border-radius: 4px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    margin-bottom: 30px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    gap: 1px;
+    background-color: var(--line-color);
+    border: 2px solid var(--line-color);
+    width: 90vw;
+    max-width: 500px;
+    aspect-ratio: 1 / 1;
+}
+
+.cell {
+    background-color: var(--primary-teal);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    font-weight: bold;
+    font-size: clamp(14px, 3vw, 22px);
+    color: #222;
+}
+
+.cell.active {
+    background-color: #ffffff;
+    border: 0.5px solid var(--line-color);
+}
+
+.cell.highlight {
+    box-shadow: inset 0 0 0 3px #ffcc00;
+    z-index: 2;
+}
+
+.cell-num {
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    font-size: 0.75rem;
+    color: var(--primary-teal);
+    font-weight: 900;
+}
+
+.input-box {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+input {
+    padding: 12px 20px;
+    font-size: 1rem;
+    border: 3px solid var(--primary-teal);
+    border-radius: 50px;
+    width: 280px;
+    outline: none;
+}
+
+button {
+    padding: 12px 25px;
+    background-color: var(--primary-teal);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* ✅ 커스텀 팝업 디자인 */
+#customAlert {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.alert-content {
+    background: white;
+    padding: 30px 50px;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    border: 4px solid var(--primary-teal);
+}
+
+.alert-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--dark-teal);
+    margin-bottom: 20px;
+}
+
+.clues-section {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    max-width: 1100px;
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.clue-group { flex: 1; }
+.clue-group h2 {
+    font-size: 1.2rem;
+    color: var(--dark-teal);
+    border-left: 5px solid var(--primary-teal);
+    padding-left: 10px;
+    margin-bottom: 15px;
+}
+
+.clue-item {
+    padding: 8px;
+    margin-bottom: 5px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: 0.2s;
+    font-size: 0.95rem;
+}
+
+.clue-item:hover { background-color: var(--light-teal); }
+.clue-item.selected { background-color: var(--primary-teal); color: white; font-weight: bold; }
+.label-bold { font-weight: bold; }
+</style>
+</head>
+
+<body>
+
+<div id="customAlert">
+    <div class="alert-content">
+        <div id="alertMsg" class="alert-text">정답입니다! 🎯</div>
+        <button onclick="closeAlert()">확인</button>
+    </div>
+</div>
+
+<div class="title-container">
+    <h1>중학 역사②</h1>
+    <span class="highlight-title">가로세로 퍼즐</span>
+</div>
+
+<div class="puzzle-wrapper">
+    <div id="grid" class="grid"></div>
+</div>
+
+<div class="input-box">
+    <input type="text" id="answerInput" placeholder="문제를 선택하고, 정답을 입력하세요." disabled>
+    <button onclick="submitAnswer()">정답 확인</button>
+</div>
+
+<div class="clues-section">
+    <div class="clue-group">
+        <h2>가로 열쇠</h2>
+        <div id="clue-h1" class="clue-item" onclick="onSelect('h1')"><span class="label-bold">가로 1.</span> 5세기 후반 신라와 혼인 관계를 맺어 고구려에 대항한 백제 왕</div>
+        <div id="clue-h2" class="clue-item" onclick="onSelect('h2')"><span class="label-bold">가로 2.</span> 6세기 초 22담로에 왕족을 파견한 백제 왕</div>
+        <div id="clue-h3" class="clue-item" onclick="onSelect('h3')"><span class="label-bold">가로 3.</span> 임금이 나라 안을 두루 살피며 돌아다니던 일을 기념하여 세운 비석</div>
+        <div id="clue-h4" class="clue-item" onclick="onSelect('h4')"><span class="label-bold">가로 4.</span> 나라 이름을 ‘신라’로 정하고 ‘왕’ 칭호를 사용하기 시작한 신라 왕</div>
+        <div id="clue-h5" class="clue-item" onclick="onSelect('h5')"><span class="label-bold">가로 5.</span> 청동기 시대 만주와 한반도 지역에 축조된 거대한 규모의 무덤</div>
+    </div>
+    <div class="clue-group">
+        <h2>세로 열쇠</h2>
+        <div id="clue-v1" class="clue-item" onclick="onSelect('v1')"><span class="label-bold">세로 1.</span> 고구려의 제천 행사</div>
+        <div id="clue-v2" class="clue-item" onclick="onSelect('v2')"><span class="label-bold">세로 2.</span> 한에 의해 함락된 고조선의 수도</div>
+        <div id="clue-v3" class="clue-item" onclick="onSelect('v3')"><span class="label-bold">세로 3.</span> 형법인 ‘율’과 행정법인 ‘령’을 합쳐 부르는 말</div>
+        <div id="clue-v4" class="clue-item" onclick="onSelect('v4')"><span class="label-bold">세로 4.</span> 지배층이 죽으면 많은 사람을 껴묻거리와 함께 묻었던 부여의 풍습</div>
+        <div id="clue-v5" class="clue-item" onclick="onSelect('v5')"><span class="label-bold">세로 5.</span> 마한의 소국으로 군장이 삼한 전체를 대표하여 이끎</div>
+        <div id="clue-v6" class="clue-item" onclick="onSelect('v6')"><span class="label-bold">세로 6.</span> 우리 역사상 최초의 국가</div>
+    </div>
+</div>
+
+<script>
+const wordConfig = [
+    {id:'h1', r:0, c:0, ans:'동성왕', hor:true},
+    {id:'h2', r:1, c:5, ans:'무령왕', hor:true},
+    {id:'h3', r:3, c:3, ans:'순수비', hor:true},
+    {id:'h4', r:6, c:1, ans:'지증왕', hor:true},
+    {id:'h5', r:5, c:5, ans:'고인돌', hor:true},
+    {id:'v1', r:0, c:0, ans:'동맹', hor:false},
+    {id:'v2', r:0, c:2, ans:'왕검성', hor:false},
+    {id:'v3', r:0, c:6, ans:'율령', hor:false},
+    {id:'v4', r:3, c:3, ans:'순장', hor:false},
+    {id:'v5', r:5, c:1, ans:'목지국', hor:false},
+    {id:'v6', r:5, c:5, ans:'고조선', hor:false}
+];
+
+let selectedId=null;
+
+// ✅ 팝업 제어 함수
+function showAlert(msg) {
+    document.getElementById('alertMsg').innerHTML = msg;
+    document.getElementById('customAlert').style.display = 'flex';
+}
+
+function closeAlert() {
+    document.getElementById('customAlert').style.display = 'none';
+    document.getElementById('answerInput').focus();
+}
+
+function init(){
+    const grid=document.getElementById('grid');
+    for(let i=0;i<64;i++){
+        const cell=document.createElement('div');
+        cell.className='cell';
+        cell.id=`c-${Math.floor(i/8)}-${i%8}`;
+        grid.appendChild(cell);
+    }
+
+    wordConfig.forEach(conf=>{
+        for(let i=0;i<conf.ans.length;i++){
+            const r=conf.hor?conf.r:conf.r+i;
+            const c=conf.hor?conf.c+i:conf.c;
+            const cell=document.getElementById(`c-${r}-${c}`);
+            if(cell){
+                cell.classList.add('active');
+                if(i===0 && !cell.querySelector('.cell-num')){
+                    const n=document.createElement('span');
+                    n.className='cell-num';
+                    n.innerText=conf.id.substring(1);
+                    cell.appendChild(n);
+                }
+            }
+        }
+    });
+}
+
+function onSelect(id){
+    document.querySelectorAll('.clue-item').forEach(el=>el.classList.remove('selected'));
+    document.querySelectorAll('.cell').forEach(el=>el.classList.remove('highlight'));
+
+    selectedId=id;
+    document.getElementById(`clue-${id}`).classList.add('selected');
+
+    const conf=wordConfig.find(c=>c.id===id);
+    for(let i=0; i<conf.ans.length; i++){
+        const r=conf.hor?conf.r:conf.r+i;
+        const c=conf.hor?conf.c+i:conf.c;
+        const target = document.getElementById(`c-${r}-${c}`);
+        if(target) target.classList.add('highlight');
+    }
+
+    const input=document.getElementById('answerInput');
+    input.disabled=false;
+    input.value='';
+    input.focus();
+}
+
+function submitAnswer(){
+    if(!selectedId) return;
+    const input=document.getElementById('answerInput');
+    const conf=wordConfig.find(c=>c.id===selectedId);
+
+    if(input.value.trim().replace(/\s/g,'')===conf.ans){
+        fill(conf);
+        showAlert("정답입니다! 🎯");
+        input.value='';
+    }else{
+        if(!conf.wrong) conf.wrong=0;
+        conf.wrong++;
+        if(conf.wrong>=2){
+            showAlert(`정답은 [${conf.ans}]입니다.`);
+            fill(conf);
+            input.value='';
+        }else showAlert("다시 도전해 보세요! 🤔");
+    }
+}
+
+function fill(conf){
+    for(let i=0;i<conf.ans.length;i++){
+        const r=conf.hor?conf.r:conf.r+i;
+        const c=conf.hor?conf.c+i:conf.c;
+        const cell=document.getElementById(`c-${r}-${c}`);
+        if(cell){
+            const num=cell.querySelector('.cell-num');
+            cell.innerText=conf.ans[i];
+            if(num) cell.appendChild(num);
+        }
+    }
+}
+
+document.getElementById('answerInput').addEventListener('keypress',e=>{
+    if(e.key==='Enter') submitAnswer();
+});
+
+init();
+</script>
+</body>
+</html>
